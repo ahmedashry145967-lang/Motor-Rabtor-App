@@ -1,5 +1,6 @@
 import flet as ft
-import requests
+import urllib.request
+import threading
 
 ROBOT_IP = "http://192.168.4.1"
 
@@ -20,19 +21,25 @@ def main(page: ft.Page):
         weight=ft.FontWeight.BOLD,
     )
 
+    def send_http_request(cmd_name, endpoint):
+        try:
+            urllib.request.urlopen(f"{ROBOT_IP}/{endpoint}", timeout=0.8)
+            status_text.value = f"تم التنفيذ: {cmd_name}"
+        except Exception:
+            status_text.value = "فشل الاتصال: تأكد من اتصالك بشبكة الروبوت"
+        page.update()
+
     def send_command(cmd_name, endpoint):
         status_text.value = f"جاري إرسال: {cmd_name}..."
         page.update()
 
         if wifi_connected:
-            try:
-                requests.get(f"{ROBOT_IP}/{endpoint}", timeout=0.5)
-                status_text.value = f"تم التنفيذ: {cmd_name}"
-            except Exception:
-                status_text.value = "فشل الاتصال: تأكد من اتصالك بشبكة الروبوت"
+            threading.Thread(
+                target=send_http_request, args=(cmd_name, endpoint), daemon=True
+            ).start()
         else:
             status_text.value = f"وضع التجربة (فعل الواي فاي): {cmd_name}"
-        page.update()
+            page.update()
 
     def toggle_bt(e):
         nonlocal bt_connected
