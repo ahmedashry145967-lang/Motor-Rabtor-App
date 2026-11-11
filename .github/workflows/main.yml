@@ -1,0 +1,41 @@
+name: Build Motor Rabtor APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install Flet
+        run: pip install "flet[all]" requests
+
+      - name: Build APK
+        run: |
+          flet create temp_app
+          cp main.py temp_app/src/main.py
+          cp main.py temp_app/main.py
+          cp requirements.txt temp_app/requirements.txt
+          cd temp_app
+          flet build apk --project "Motor Rabtor" --org "com.motor.rabtor"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Motor-Rabtor-APK
+          path: temp_app/build/apk/*.apk
